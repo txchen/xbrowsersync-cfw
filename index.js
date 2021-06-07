@@ -4,17 +4,20 @@ const createNewBookmarksEnabled = true
 
 // KV binding XBSKV must be available
 if (typeof XBSKV === 'undefined') {
-  addEventListener("fetch", (event) => {
+  addEventListener('fetch', event => {
     event.respondWith(
-      new Response('XBSKV is not defined, please check KV Namespace Bindings.', { status: 500 })
+      new Response(
+        'XBSKV is not defined, please check KV Namespace Bindings.',
+        { status: 500 },
+      ),
     )
   })
 } else {
-  addEventListener("fetch", (event) => {
+  addEventListener('fetch', event => {
     event.respondWith(
       handleRequest(event.request).catch(
-        (err) => new Response(err.stack, { status: 500 })
-      )
+        err => new Response(err.stack, { status: 500 }),
+      ),
     )
   })
 }
@@ -23,7 +26,7 @@ if (typeof XBSKV === 'undefined') {
  * @param {Request} request
  * @returns {Promise<Response>}
  */
-const handleRequest = async (request) => {
+const handleRequest = async request => {
   const { pathname } = new URL(request.url)
 
   // service info
@@ -33,7 +36,9 @@ const handleRequest = async (request) => {
 
   // bookmarks apis
   if (pathname.startsWith('/bookmarks')) {
-    const paths = pathname.replace('/bookmarks', '').split('/')
+    const paths = pathname
+      .replace('/bookmarks', '')
+      .split('/')
       .filter(p => p)
 
     if (request.method === 'POST' && paths.length === 0) {
@@ -49,25 +54,25 @@ const handleRequest = async (request) => {
     }
   }
 
-  return new Response('not found', { status: 404 });
+  return new Response('not found', { status: 404 })
 }
 
-const jsonToResponse = (json) => {
+const jsonToResponse = json => {
   return new Response(JSON.stringify(json), {
-    headers: { "Content-Type": "application/json" },
+    headers: { 'Content-Type': 'application/json' },
   })
 }
 
 const handleServiceInfo = () => {
   return jsonToResponse({
     maxSyncSize: 104857600,
-    message: "Welcome to xbrowsersync-cfw.",
+    message: 'Welcome to xbrowsersync-cfw.',
     status: createNewBookmarksEnabled ? 1 : 3,
-    version: "1.1.13"
+    version: '1.1.13',
   })
 }
 
-const handlePostBookmarks = async (jsonBody) => {
+const handlePostBookmarks = async jsonBody => {
   if (!createNewBookmarksEnabled) {
     return new Response('bookmarks creation disabled', { status: 400 })
   }
@@ -82,7 +87,7 @@ const handlePostBookmarks = async (jsonBody) => {
   return jsonToResponse({
     id: bid,
     lastUpdated,
-    version: jsonBody.version
+    version: jsonBody.version,
   })
 }
 
@@ -95,7 +100,7 @@ const hanldePutBookmarks = async (bid, jsonBody) => {
   }
   const lastUpdatedInDB = await XBSKV.get(`${bid}_lastUpdated`)
   if (lastUpdatedInDB !== jsonBody.lastUpdated) {
-    return new Response('A sync conflict was detected', { status : 400 })
+    return new Response('A sync conflict was detected', { status: 400 })
   }
   const newLastUpdated = new Date().toISOString()
   await XBSKV.put(`${bid}`, jsonBody.bookmarks)
@@ -103,7 +108,7 @@ const hanldePutBookmarks = async (bid, jsonBody) => {
   return jsonToResponse({ lastUpdated: newLastUpdated })
 }
 
-const handleGetBookmarks = async (paths) => {
+const handleGetBookmarks = async paths => {
   const version = await XBSKV.get(`${paths[0]}_version`)
   const lastUpdated = await XBSKV.get(`${paths[0]}_lastUpdated`)
   if (paths.length >= 2 && paths[1] === 'version') {
@@ -114,7 +119,7 @@ const handleGetBookmarks = async (paths) => {
   }
   const result = {
     version,
-    lastUpdated
+    lastUpdated,
   }
   const bookmarks = await XBSKV.get(`${paths[0]}`)
   if (bookmarks) {
