@@ -109,13 +109,13 @@ const hanldePutBookmarks = async (bid, jsonBody) => {
 }
 
 const handleGetBookmarks = async paths => {
-  const version = await XBSKV.get(`${paths[0]}_version`)
   const lastUpdated = await XBSKV.get(`${paths[0]}_lastUpdated`)
-  if (paths.length >= 2 && paths[1] === 'version') {
-    return jsonToResponse({ version })
-  }
   if (paths.length >= 2 && paths[1] === 'lastUpdated') {
     return jsonToResponse({ lastUpdated })
+  }
+  const version = await XBSKV.get(`${paths[0]}_version`)
+  if (paths.length >= 2 && paths[1] === 'version') {
+    return jsonToResponse({ version })
   }
   const result = {
     version,
