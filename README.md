@@ -1,15 +1,15 @@
-# 👷 `worker-template` Hello World
+# xBrowserSync API implementation using Cloudflare worker and KV
 
-A template for kick starting a Cloudflare worker project.
+This is a simple implementation of the [xBrowserSync API](https://github.com/xbrowsersync/api) using Cloudflare workder.
+It uses Cloudflare KV as storage.
 
-[`index.js`](https://github.com/cloudflare/worker-template/blob/master/index.js) is the content of the Workers script.
+## Deployment
 
-#### Wrangler
+- Create a Cloudflare worker project
+- Create a KV namespace, and add KV binding in the worker project, name it as `XBSKV`
+- Paste the content of [index.js](./index.js) into worker, modify the settings and then save and deploy
+- Profit
 
-To generate using [wrangler](https://github.com/cloudflare/wrangler)
+## Usage
 
-```
-wrangler generate projectname https://github.com/cloudflare/worker-template
-```
-
-Further documentation for Wrangler can be found [here](https://developers.cloudflare.com/workers/tooling/wrangler).
+Point your xBrowserSync plugin/app to your worker URL
