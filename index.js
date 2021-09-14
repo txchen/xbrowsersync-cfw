@@ -2,6 +2,13 @@
 const createNewBookmarksEnabled = true
 // end of settings
 
+const cors = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT',
+  'Access-Control-Allow-Origin': 'chrome-extension://lcbjdhceifofjlpecfpeimnnphbcjgnc',
+  'Access-Control-Allow-Headers': 'Content-Type, Accept-Version',
+};
+
 // KV binding XBSKV must be available
 if (typeof XBSKV === 'undefined') {
   addEventListener('fetch', event => {
@@ -29,6 +36,10 @@ if (typeof XBSKV === 'undefined') {
 const handleRequest = async request => {
   const { pathname } = new URL(request.url)
 
+  if (request.method === 'OPTIONS') {
+    return jsonToResponse('')
+  }
+
   // service info
   if (pathname === '/info') {
     return handleServiceInfo()
@@ -54,12 +65,19 @@ const handleRequest = async request => {
     }
   }
 
-  return new Response('not found', { status: 404 })
+  return sendError('not found', 404)
 }
 
 const jsonToResponse = json => {
   return new Response(JSON.stringify(json), {
-    headers: { 'Content-Type': 'application/json' },
+    headers: Object.assign({ 'Content-Type': 'application/json' }, cors)
+  })
+}
+
+const sendError = (text, err) => {
+  return new Response(text, {
+    status: err || 400,
+    headers: Object.assign({ 'Content-Type': 'text/plain' }, cors)
   })
 }
 
@@ -74,10 +92,10 @@ const handleServiceInfo = () => {
 
 const handlePostBookmarks = async jsonBody => {
   if (!createNewBookmarksEnabled) {
-    return new Response('bookmarks creation disabled', { status: 400 })
+    return sendError('bookmarks creation disabled')
   }
   if (jsonBody.version == null) {
-    return new Response('missing version input', { status: 400 })
+    return sendError('missing version input')
   }
   // set version and lastUpdated to KV
   const bid = hexUUID()
@@ -93,14 +111,14 @@ const handlePostBookmarks = async jsonBody => {
 
 const hanldePutBookmarks = async (bid, jsonBody) => {
   if (!jsonBody.bookmarks) {
-    return new Response('missing bookmarks input', { status: 400 })
+    return sendError('missing bookmarks input')
   }
   if (!jsonBody.lastUpdated) {
-    return new Response('missing lastUpdated input', { status: 400 })
+    return sendError('missing lastUpdated input')
   }
   const lastUpdatedInDB = await XBSKV.get(`${bid}_lastUpdated`)
   if (lastUpdatedInDB !== jsonBody.lastUpdated) {
-    return new Response('A sync conflict was detected', { status: 400 })
+    return sendError('A sync conflict was detected')
   }
   const newLastUpdated = new Date().toISOString()
   await XBSKV.put(`${bid}`, jsonBody.bookmarks)
